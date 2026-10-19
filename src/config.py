@@ -20,11 +20,12 @@ KNOWN_KEYS = (
 )
 
 NPM_NAME_RE = re.compile(
-    r"^(@[a-z0-9~-][a-z0-9._~-]*/)?[a-z0-9~-][a-z0-9._~-]*$"
+    r"^(@[a-z0-9~-][a-z0-9._~-]*/)?[A-Za-z0-9~-][A-Za-z0-9._~-]*$"
 )
 TEST_NAME_RE = re.compile(r"^[A-Z]+$")
+NUM = r"(0|[1-9]\d*)"
 SEMVER_RE = re.compile(
-    r"^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$"
+    rf"^{NUM}\.{NUM}\.{NUM}(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$"
 )
 
 
@@ -70,7 +71,9 @@ def check_unknown_keys(data):
 
 def get_str(data, key, default=None):
     """Возвращает строковый параметр; без default он обязателен."""
-    value = data.get(key, default)
+    value = data.get(key)
+    if value is None:
+        value = default
     if value is None:
         raise ConfigError(f"Не задан обязательный параметр '{key}'")
     if not isinstance(value, str):

@@ -1,12 +1,17 @@
-"""Точка входа: загрузка конфигурации и вывод параметров (этап 1)."""
+"""Точка входа: прямые зависимости npm-пакета (этап 2)."""
 
 import argparse
 import sys
 
 from config import ConfigError, load_config
+from npm_repo import RepositoryError, get_direct_dependencies
 
 EXIT_OK = 0
 EXIT_ERROR = 1
+TEST_MODE_MESSAGE = (
+    "Режим тестового репозитория будет доступен на этапе 3 "
+    "(поставьте test_mode: false)"
+)
 
 
 def parse_args(argv):
@@ -24,10 +29,31 @@ def parse_args(argv):
     return parser.parse_args(argv)
 
 
-def print_params(config):
-    """Выводит все параметры в формате ключ-значение."""
-    for key, value in vars(config).items():
-        print(f"{key}: {value}")
+def print_dependencies(config, dependencies):
+    """Выводит прямые зависимости заданного пакета."""
+    title = f"{config.package}@{config.version}"
+    if not dependencies:
+        print(f"{title}: прямых зависимостей нет")
+        return
+    print(f"Прямые зависимости {title} ({len(dependencies)}):")
+    for name, spec in dependencies.items():
+        print(f"  {name}: {spec}")
+
+
+def run(config):
+    """Получает и выводит зависимости, возвращает код завершения."""
+    if config.test_mode:
+        print(f"Ошибка: {TEST_MODE_MESSAGE}", file=sys.stderr)
+        return EXIT_ERROR
+    try:
+        dependencies = get_direct_dependencies(
+            config.repository, config.package, config.version
+        )
+    except RepositoryError as exc:
+        print(f"Ошибка репозитория: {exc}", file=sys.stderr)
+        return EXIT_ERROR
+    print_dependencies(config, dependencies)
+    return EXIT_OK
 
 
 def main(argv=None):
@@ -38,8 +64,7 @@ def main(argv=None):
     except ConfigError as exc:
         print(f"Ошибка конфигурации: {exc}", file=sys.stderr)
         return EXIT_ERROR
-    print_params(config)
-    return EXIT_OK
+    return run(config)
 
 
 if __name__ == "__main__":

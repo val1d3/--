@@ -1,13 +1,9 @@
 """Тесты загрузки и проверки конфигурации."""
 
-import contextlib
-import io
-import tempfile
 import unittest
-from pathlib import Path
 
 from config import ConfigError, load_config
-from main import EXIT_ERROR, EXIT_OK, main
+from support import TempDirTestCase
 
 VALID = {
     "package": "express",
@@ -19,19 +15,8 @@ VALID = {
 }
 
 
-class ConfigTestCase(unittest.TestCase):
-    """Базовый класс: временная папка и создание YAML-файлов."""
-
-    _tmp = None
-
-    @property
-    def tmp(self):
-        """Путь к временной папке; удаляется после завершения теста."""
-        if self._tmp is None:
-            holder = tempfile.TemporaryDirectory()
-            self.addCleanup(holder.cleanup)
-            self._tmp = Path(holder.name)
-        return self._tmp
+class ConfigTestCase(TempDirTestCase):
+    """Базовый класс: создание YAML-файлов во временной папке."""
 
     def write(self, **overrides):
         """Создаёт YAML-файл; значение None удаляет ключ."""
@@ -68,10 +53,19 @@ class ValidConfigTests(ConfigTestCase):
         """Фильтр можно не задавать - он пустой."""
         self.assertEqual(load_config(self.write(filter=None)).filter, "")
 
+    def test_empty_filter_value(self):
+        """Пустое значение 'filter:' в YAML равно значению по умолчанию."""
+        self.assertEqual(load_config(self.write(filter="")).filter, "")
+
     def test_scoped_package(self):
         """Имена вида @scope/name допустимы."""
         cfg = load_config(self.write(package="'@babel/core'"))
         self.assertEqual(cfg.package, "@babel/core")
+
+    def test_legacy_uppercase_name(self):
+        """Старые пакеты с заглавными буквами (JSONStream) допустимы."""
+        cfg = load_config(self.write(package="JSONStream"))
+        self.assertEqual(cfg.package, "JSONStream")
 
     def test_test_mode_valid(self):
         """Тестовый режим: имя - заглавные буквы, репозиторий - файл."""
@@ -120,7 +114,7 @@ class ParameterErrorTests(ConfigTestCase):
 
     def test_bad_package_name(self):
         """Недопустимые имена npm-пакетов."""
-        for name in ("Express", "my pkg", "-x/y", ".hidden"):
+        for name in ("my pkg", "-x/y", ".hidden", "a/b"):
             with self.subTest(name=name):
                 self.assert_error("имя", self.write(package=f"'{name}'"))
 
@@ -132,7 +126,7 @@ class ParameterErrorTests(ConfigTestCase):
 
     def test_bad_version(self):
         """Версия не в формате semver."""
-        for ver in ("1.0", "latest", "^1.2.3", "v1.2.3"):
+        for ver in ("1.0", "latest", "^1.2.3", "v1.2.3", "01.2.3"):
             with self.subTest(ver=ver):
                 self.assert_error("Версия", self.write(version=f"'{ver}'"))
 
@@ -172,33 +166,6 @@ class TestModeErrorTests(ConfigTestCase):
             package="A", repository="nope.txt", test_mode="true"
         )
         self.assert_error("не найден", path)
-
-
-class MainTests(ConfigTestCase):
-    """Поведение CLI."""
-
-    def run_main(self, path):
-        """Запускает main, возвращает код, stdout и stderr."""
-        out, err = io.StringIO(), io.StringIO()
-        with contextlib.redirect_stdout(out):
-            with contextlib.redirect_stderr(err):
-                code = main(["--config", path])
-        return code, out.getvalue(), err.getvalue()
-
-    def test_prints_params(self):
-        """Приложение выводит параметры в формате ключ-значение."""
-        path = self.write(output=str(self.tmp / "g.png"))
-        code, out, _ = self.run_main(path)
-        self.assertEqual(code, EXIT_OK)
-        self.assertIn("package: express", out)
-        self.assertIn("version: 4.18.2", out)
-        self.assertIn("test_mode: False", out)
-
-    def test_error_exit_code(self):
-        """При ошибке - сообщение в stderr и ненулевой код."""
-        code, _, err = self.run_main(str(self.tmp / "nope.yaml"))
-        self.assertEqual(code, EXIT_ERROR)
-        self.assertIn("Ошибка конфигурации", err)
 
 
 if __name__ == "__main__":
