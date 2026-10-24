@@ -7,6 +7,8 @@ import urllib.error
 import urllib.request
 from urllib.parse import quote
 
+from config import MAX_NAME_LENGTH, NPM_NAME_RE
+
 HTTP_NOT_FOUND = 404
 TIMEOUT_SECONDS = 15
 TIMEOUT_ERRORS = (TimeoutError, socket.timeout)
@@ -23,7 +25,7 @@ class RepositoryError(Exception):
 def build_url(repository, name, version):
     """Строит URL метаданных версии: <репозиторий>/<имя>/<версия>."""
     base = repository.rstrip("/")
-    return f"{base}/{quote(name, safe='@')}/{quote(version)}"
+    return f"{base}/{quote(name, safe='@')}/{quote(version, safe='')}"
 
 
 def http_error(code, url):
@@ -78,14 +80,26 @@ def get_direct_dependencies(repository, name, version,
                             timeout=TIMEOUT_SECONDS):
     """Возвращает прямые зависимости пакета: {имя: диапазон версий}."""
     url = build_url(repository, name, version)
-    dependencies = fetch_json(url, timeout).get("dependencies")
-    if dependencies is None:
-        return {}
+    return extract_dependencies(fetch_json(url, timeout))
+
+
+def extract_dependencies(metadata):
+    """Проверяет имена и диапазоны зависимостей в метаданных версии."""
+    dependencies = metadata.get("dependencies", {})
     is_valid = isinstance(dependencies, dict) and all(
-        isinstance(spec, str) for spec in dependencies.values()
+        valid_dependency(name, spec) for name, spec in dependencies.items()
     )
     if not is_valid:
         raise RepositoryError(
             "Поле 'dependencies' должно быть объектом 'имя: диапазон'"
         )
     return dict(sorted(dependencies.items()))
+
+
+def valid_dependency(name, spec):
+    """Проверяет запись dependencies до построения URL запроса."""
+    return (
+        isinstance(name, str) and len(name) <= MAX_NAME_LENGTH
+        and NPM_NAME_RE.fullmatch(name) is not None
+        and isinstance(spec, str) and bool(spec.strip())
+    )

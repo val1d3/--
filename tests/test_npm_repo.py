@@ -103,6 +103,14 @@ class DependenciesTests(unittest.TestCase):
             timeout=SHORT_TIMEOUT,
         )
 
+    def test_invalid_dependency_entries(self):
+        """Null, пустой диапазон и недопустимое имя не теряются молча."""
+        for deps in (None, {"x": ""}, {"bad name": "1.0.0"}):
+            with self.subTest(deps=deps):
+                self.assert_error("dependencies", {"/pkg/1.0.0": ok(
+                    {"dependencies": deps}
+                )})
+
 
 class NetworkErrorTests(unittest.TestCase):
     """Сетевые сбои имитируются подменой urlopen (не зависят от ОС)."""
@@ -135,7 +143,7 @@ class NetworkErrorTests(unittest.TestCase):
         )
 
     def test_connection_reset(self):
-        """Соединение оборвано во время чтения ответа."""
+        """Соединение оборвалось во время чтения ответа."""
         self.assert_network_error(
             "подключиться", ConnectionResetError("reset")
         )
