@@ -168,5 +168,47 @@ class TestModeErrorTests(ConfigTestCase):
         self.assert_error("не найден", path)
 
 
+class ValidationRegressionTests(ConfigTestCase):
+    """Проверки ошибок, которые раньше пропускала конфигурация."""
+
+    def test_invalid_repository_urls(self):
+        """Пробелы, неверные порты и суффиксы URL запрещены."""
+        values = (
+            "https://bad host", "https://host:abc", "https://host:65536",
+            "https://host:0", "https://host?query", "https://host#fragment",
+            "https://[broken", "https://-host", "https://user@host",
+        )
+        for value in values:
+            with self.subTest(value=value):
+                self.assert_error("URL", self.write(repository=value))
+
+    def test_boolean_spelling(self):
+        """Неявные YAML-значения yes/on и числа не заменяют true/false."""
+        for value in ("yes", "no", "on", "off", "1", "0", "null", "[]"):
+            with self.subTest(value=value):
+                self.assert_error("test_mode", self.write(test_mode=value))
+
+    def test_quoted_boolean(self):
+        """Регулярное выражение допускает строку false в кавычках."""
+        self.assertFalse(load_config(self.write(test_mode="'false'"))
+                         .test_mode)
+
+    def test_invalid_semver_identifiers(self):
+        """Пустые идентификаторы и ведущие нули prerelease запрещены."""
+        for value in ("1.0.0-01", "1.0.0-a..b", "1.0.0+..", "1.0.0-."):
+            with self.subTest(value=value):
+                self.assert_error("Версия", self.write(version=value))
+
+    def test_invalid_repository_path(self):
+        """Шаблон пути отсекает запрещённые символы до чтения файла."""
+        path = self.write(package="A", test_mode="true",
+                          repository="'bad?.txt'")
+        self.assert_error("путь", path)
+
+    def test_filter_type(self):
+        """Фильтр должен оставаться строкой."""
+        self.assert_error("filter", self.write(filter="42"))
+
+
 if __name__ == "__main__":
     unittest.main()
