@@ -1,4 +1,4 @@
-"""Тесты командной строки: вывод прямых зависимостей (этап 2)."""
+"""Тесты командной строки для этапов 1, 2 и 3."""
 
 import contextlib
 import io
@@ -26,12 +26,12 @@ class MainTests(TempDirTestCase):
         path.write_text("\n".join(lines) + "\n", encoding="utf-8")
         return str(path)
 
-    def run_main(self, path):
+    def run_main(self, path, stage="2"):
         """Запускает main, возвращает код, stdout и stderr."""
         out, err = io.StringIO(), io.StringIO()
         with contextlib.redirect_stdout(out):
             with contextlib.redirect_stderr(err):
-                code = main(["--config", path])
+                code = main(["--config", path, "--stage", stage])
         return code, out.getvalue(), err.getvalue()
 
     def test_prints_direct_dependencies(self):
@@ -63,14 +63,28 @@ class MainTests(TempDirTestCase):
         self.assertEqual(code, EXIT_ERROR)
         self.assertIn("Ошибка конфигурации", err)
 
-    def test_test_mode_not_supported_yet(self):
-        """Тестовый режим появится на этапе 3."""
+    def test_test_graph(self):
+        """Третий этап строит граф из файла и сохраняет ребро цикла."""
         repo = self.tmp / "repo.txt"
-        repo.write_text("A: B\nB:\n", encoding="utf-8")
+        repo.write_text("A: B\nB: A\n", encoding="utf-8")
         path = self.write_config(repo, test_mode="true", package="A")
-        code, _, err = self.run_main(path)
-        self.assertEqual(code, EXIT_ERROR)
-        self.assertIn("этапе 3", err)
+        code, out, err = self.run_main(path, stage="3")
+        self.assertEqual(code, EXIT_OK)
+        self.assertEqual(err, "")
+        self.assertIn("A -> B", out)
+        self.assertIn("Цикл: B -> A", out)
+
+    def test_stage_one(self):
+        """Первый этап выводит все параметры без доступа к сети."""
+        path = self.write_config("https://registry.invalid")
+        code, out, err = self.run_main(path, stage="1")
+        self.assertEqual(code, EXIT_OK)
+        self.assertEqual(err, "")
+        for key in (
+            "package", "repository", "test_mode",
+            "version", "output", "filter",
+        ):
+            self.assertIn(key + ":", out)
 
 
 if __name__ == "__main__":
