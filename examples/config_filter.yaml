@@ -1,0 +1,6 @@
+package: A
+repository: examples/filter.txt
+test_mode: true
+version: "1.0.0"
+output: graph.png
+filter: "B"
