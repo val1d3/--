@@ -1,0 +1,6 @@
+package: color-convert
+repository: https://registry.npmjs.org
+test_mode: false
+version: "2.0.1"
+output: color-convert.png
+filter: ""

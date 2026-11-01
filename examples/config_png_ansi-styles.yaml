@@ -1,0 +1,6 @@
+package: ansi-styles
+repository: https://registry.npmjs.org
+test_mode: false
+version: "4.3.0"
+output: ansi-styles.png
+filter: ""
