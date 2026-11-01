@@ -1,4 +1,4 @@
-"""CLI: демонстрация конфигурации, прямых зависимостей и полного графа."""
+"""CLI: параметры, зависимости, граф, порядок загрузки и PNG."""
 
 import argparse
 import sys
@@ -9,6 +9,7 @@ from loading_order import print_loading_order
 from npm_repo import RepositoryError
 from npm_source import NpmRepository
 from test_repo import TestRepository
+from visualization import VisualizationError, save_visualization
 
 EXIT_OK = 0
 EXIT_ERROR = 1
@@ -16,6 +17,7 @@ STAGE_CONFIG = 1
 STAGE_DIRECT = 2
 STAGE_GRAPH = 3
 STAGE_ORDER = 4
+STAGE_IMAGE = 5
 
 
 def parse_args(argv):
@@ -33,9 +35,9 @@ def parse_args(argv):
     parser.add_argument(
         "--stage",
         type=int,
-        default=STAGE_GRAPH,
-        choices=(STAGE_CONFIG, STAGE_DIRECT, STAGE_GRAPH, STAGE_ORDER),
-        help="1: параметры; 2: зависимости; 3: граф; 4: порядок загрузки",
+        default=STAGE_IMAGE,
+        choices=range(STAGE_CONFIG, STAGE_IMAGE + 1),
+        help="1: параметры; 2: зависимости; 3: граф; 4: порядок; 5: PNG",
     )
     return parser.parse_args(argv)
 
@@ -74,12 +76,16 @@ def run_stage(config, stage):
     graph = build_graph(source, config.package, config.version, config.filter)
     if stage == STAGE_ORDER:
         print_loading_order(graph)
+    elif stage == STAGE_IMAGE:
+        dot_path, png_path = save_visualization(graph, config.output)
+        print(f"DOT сохранён: {dot_path}")
+        print(f"PNG сохранён: {png_path}")
     else:
         print_graph(graph)
 
 
 def main(argv=None):
-    """Запускает приложение; ошибки конфигурации и репозитория дают код 1."""
+    """Запускает приложение; ожидаемые ошибки дают код завершения 1."""
     args = parse_args(sys.argv[1:] if argv is None else argv)
     try:
         config = load_config(args.config)
@@ -89,6 +95,9 @@ def main(argv=None):
         return EXIT_ERROR
     except RepositoryError as exc:
         print(f"Ошибка репозитория: {exc}", file=sys.stderr)
+        return EXIT_ERROR
+    except VisualizationError as exc:
+        print(f"Ошибка визуализации: {exc}", file=sys.stderr)
         return EXIT_ERROR
     return EXIT_OK
 
