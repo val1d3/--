@@ -1,13 +1,16 @@
-PYTHON ?= python3
+PYTHON ?= python
 CONFIG ?= config.yaml
+STAGE ?= 5
 
 .PHONY: run test lint
 
 run:
-	$(PYTHON) src/main.py --config $(CONFIG)
+	$(PYTHON) src/main.py --config $(CONFIG) --stage $(STAGE)
 
 test:
-    PYTHONPATH=src $(PYTHON) -m unittest discover -s tests -v
+	$(PYTHON) -m unittest discover -s tests -v
 
 lint:
-	$(PYTHON) -m flake8 --max-line-length=79 src tests
+	$(PYTHON) -m flake8 --max-line-length=79 --max-complexity=10 src tests
+
+export PYTHONPATH := src
