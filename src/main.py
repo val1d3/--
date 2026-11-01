@@ -5,6 +5,7 @@ import sys
 
 from config import ConfigError, load_config
 from graph import build_graph, print_graph
+from loading_order import print_loading_order
 from npm_repo import RepositoryError
 from npm_source import NpmRepository
 from test_repo import TestRepository
@@ -14,6 +15,7 @@ EXIT_ERROR = 1
 STAGE_CONFIG = 1
 STAGE_DIRECT = 2
 STAGE_GRAPH = 3
+STAGE_ORDER = 4
 
 
 def parse_args(argv):
@@ -32,8 +34,8 @@ def parse_args(argv):
         "--stage",
         type=int,
         default=STAGE_GRAPH,
-        choices=(STAGE_CONFIG, STAGE_DIRECT, STAGE_GRAPH),
-        help="1: параметры; 2: прямые зависимости; 3: полный граф",
+        choices=(STAGE_CONFIG, STAGE_DIRECT, STAGE_GRAPH, STAGE_ORDER),
+        help="1: параметры; 2: зависимости; 3: граф; 4: порядок загрузки",
     )
     return parser.parse_args(argv)
 
@@ -70,7 +72,10 @@ def run_stage(config, stage):
         print_dependencies(config, source.dependencies(node))
         return
     graph = build_graph(source, config.package, config.version, config.filter)
-    print_graph(graph)
+    if stage == STAGE_ORDER:
+        print_loading_order(graph)
+    else:
+        print_graph(graph)
 
 
 def main(argv=None):
