@@ -483,7 +483,7 @@ Start-Process -FilePath .\ansi-styles.png
 ```text
 ansi-styles@4.3.0 -> color-convert@2.0.1 -> color-name@1.1.4
 ```
-<img width="628" height="59" alt="image" src="https://github.com/user-attachments/assets/632fabbc-374d-427c-b1d8-e5cc81b19e5a" />
+![Граф ansi-styles](https://github.com/user-attachments/assets/632fabbc-374d-427c-b1d8-e5cc81b19e5a)
 
 ### 5.7. Реальный пакет color-convert
 
@@ -512,7 +512,7 @@ Start-Process -FilePath .\color-convert.png
 ```text
 color-convert@2.0.1 -> color-name@1.1.4
 ```
-<img width="414" height="59" alt="image" src="https://github.com/user-attachments/assets/1ed0c118-fe9a-412a-b2e4-656f1f219ca3" />
+![Граф color-convert](https://github.com/user-attachments/assets/1ed0c118-fe9a-412a-b2e4-656f1f219ca3)
 
 ### 5.8. Реальный пакет color-name
 
@@ -537,7 +537,7 @@ Start-Process -FilePath .\color-name.png
 ```
 
 Ожидается одна вершина color-name@1.1.4 без рёбер.
-<img width="182" height="59" alt="image" src="https://github.com/user-attachments/assets/eb4ac9e3-4fd9-4116-abe9-fa102a8fd7bf" />
+![Граф color-name](https://github.com/user-attachments/assets/eb4ac9e3-4fd9-4116-abe9-fa102a8fd7bf)
 
 ### 5.9. Проверка трёх результатов
 
