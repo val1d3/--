@@ -483,7 +483,8 @@ Start-Process -FilePath .\ansi-styles.png
 ```text
 ansi-styles@4.3.0 -> color-convert@2.0.1 -> color-name@1.1.4
 ```
-![img_1.png](img_1.png)
+<img width="628" height="59" alt="image" src="https://github.com/user-attachments/assets/632fabbc-374d-427c-b1d8-e5cc81b19e5a" />
+
 ### 5.7. Реальный пакет color-convert
 
 ```powershell
@@ -511,7 +512,8 @@ Start-Process -FilePath .\color-convert.png
 ```text
 color-convert@2.0.1 -> color-name@1.1.4
 ```
-![img_2.png](img_2.png)
+<img width="414" height="59" alt="image" src="https://github.com/user-attachments/assets/1ed0c118-fe9a-412a-b2e4-656f1f219ca3" />
+
 ### 5.8. Реальный пакет color-name
 
 ```powershell
@@ -535,7 +537,8 @@ Start-Process -FilePath .\color-name.png
 ```
 
 Ожидается одна вершина color-name@1.1.4 без рёбер.
-![img_3.png](img_3.png)
+<img width="182" height="59" alt="image" src="https://github.com/user-attachments/assets/eb4ac9e3-4fd9-4116-abe9-fa102a8fd7bf" />
+
 ### 5.9. Проверка трёх результатов
 
 После успешного выполнения трёх примеров:
